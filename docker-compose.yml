@@ -1,0 +1,133 @@
+version: '3'
+services:
+
+  consumer.send.email:
+    build: ./consumers/send_email
+    volumes:
+      - ./consumers/send_email:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    depends_on:
+      - rabbit.mq
+    environment:
+      - NAME=consumer.SendEmail
+    env_file:
+      - .env
+
+  consumer.send.front:
+    build: ./consumers/send_front
+    volumes:
+      - ./consumers/send_front:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    depends_on:
+      - rabbit.mq
+    environment:
+      - NAME=consumer.SendFront
+    env_file:
+      - .env
+
+  rabbit.mq:
+    image: rabbitmq:3.12.0-management-alpine
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    env_file:
+      - .env
+    networks:
+      - lab325_examples_network
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  socket.sunny:
+    build: ./sockets
+    volumes:
+      - ./sockets:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    depends_on:
+      - redis.socket
+    environment:
+      - SERVER_NAME=socket.Sunny
+    env_file:
+      - .env
+
+  socket.jonny:
+    build: ./sockets
+    volumes:
+      - ./sockets:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    depends_on:
+      - redis.socket
+    environment:
+      - SERVER_NAME=socket.Jonny
+    env_file:
+      - .env
+
+  redis.socket:
+    image: 'redis:alpine'
+    volumes:
+      - './volumes/db/redis/sockets:/data'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+
+  api.send.email:
+    build: ./api/api_send_mail
+    volumes:
+      - ./api/api_send_mail:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    environment:
+      - NAME=api.SendMail
+    env_file:
+      - .env
+
+  front.vue:
+    build: ./front/vue
+    volumes:
+      - ./front/vue:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    environment:
+      - NAME=front.Vue
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    ports:
+      - "80:80"
+    depends_on:
+      - front.vue
+      - api.send.email
+
+networks:
+  lab325_examples_network:
+    driver: bridge

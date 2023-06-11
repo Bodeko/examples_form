@@ -1,0 +1,12 @@
+{
+  "name": "stormexpress",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "nodemailer": "^6.9.3"
+  }
+}
