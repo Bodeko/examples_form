@@ -87,9 +87,9 @@ services:
       - lab325_examples_network
 
   api.send.email:
-    build: ./api/api_send_mail
+    build: ./api/api_send_email
     volumes:
-      - ./api/api_send_mail:/usr/src/app
+      - ./api/api_send_email:/usr/src/app
     command: sh -c " npm install && npm start "
     extra_hosts:
       - 'host.docker.internal:host-gateway'

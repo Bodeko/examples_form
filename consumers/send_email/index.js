@@ -13,14 +13,14 @@ amqp.connect(`amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITM
             console.error(errorConnect)
             process.exit(-1);
         }
-        console.debug("connect pingator rabbit ok")
+        console.debug("connect RabbitMQ ok")
         amqpConnection = connection
         connection.createChannel(function(errorChannel, channel) {
             if (errorChannel) {
                 console.log(errorChannel)
                 process.exit(-1);
             }
-            console.log("create pingator rabbit channel ok")
+            console.log("create RabbitMQ channel ok")
             let amqpChannelPingator = channel
             let amqpChannelFront = channel
 
