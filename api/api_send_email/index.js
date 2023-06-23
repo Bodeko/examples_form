@@ -7,7 +7,7 @@ const RABBITMQ_SERVER = process.env.RABBITMQ_SERVER || 'rabbit.mq'
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || 5672
 const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`
 
-const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'sendEmail'
+const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'send.email'
 
 /**
  * Configure microservice
@@ -38,38 +38,44 @@ amqp.connect(RABBITMQ_CONNECTION_URI,{},
          * Step 2
          * Create rabbitMQ channel
          */
-        connection.createChannel((errorChannel, channel) => {
+        await connection.createChannel((errorChannel, channel) => {
             if (errorChannel) {
                 console.error(errorChannel)
                 process.exit(-1)
             }
-            channel.assertQueue(RABBITMQ_QUEUE_SEND_EMAIL)
-            console.debug("create RabbitMQ channel ok")
+
+            channel.assertQueue(RABBITMQ_QUEUE_SEND_EMAIL, {}, (errorEmailQueue) => {
+                if (errorEmailQueue) {
+                    console.error(errorEmailQueue)
+                    process.exit(-1)
+                }
+                console.debug("Email queue asserted")
+            })
 
             /**
-             * Step 3
+             * Step 4
              * Create http server
              */
-            http.createServer((request, response) =>{
+            http.createServer((request, response) => {
                 /**
-                 * Step 4
+                 * Step 5
                  * when front send data create msg id <UUID v4>
                  */
                 let msg = {
-                    'id' : v4(),
-                    'email' : 'keeper@ninydev.com', //request.body.email,
-                    'name' : 'Oleksandr Nykytin' //request.body.name
+                    'id': v4(),
+                    'email': 'keeper@ninydev.com', //request.body.email,
+                    'name': 'Oleksandr Nykytin' //request.body.name
                 }
                 console.log(msg)
 
                 /**
-                 * Step 5
+                 * Step 6
                  * send message to RabbitMQ queue
                  */
                 channel.sendToQueue(RABBITMQ_QUEUE_SEND_EMAIL, Buffer.from(JSON.stringify(msg)))
 
                 /**
-                 * Step 6
+                 * Step 7
                  * send msg.id to front
                  */
                 response.end(msg.id)
