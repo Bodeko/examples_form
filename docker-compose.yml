@@ -98,7 +98,7 @@ services:
     depends_on:
       - rabbit.mq
     environment:
-      - SERVER_NAME=api.send.name
+      - SERVER_NAME=api.send.email
     env_file:
       - .env
 
