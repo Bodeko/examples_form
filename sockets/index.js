@@ -1,29 +1,31 @@
 /**
- * Configure app
+ * Configure Redis server
  */
-const PORT = process.env.PORT || 3000
-const SERVER_NAME = process.env.SERVER_NAME || 'Node Socket'
 const REDIS_SOCKET_HOST = process.env.REDIS_SOCKET_HOST || 'redis.sockets'
 const REDIS_SOCKET_PORT = process.env.REDIS_SOCKET_PORT || 6379
 
 /**
- * Import modules
+ * Configure microservice
  */
+const SERVER_NAME = process.env.SERVER_NAME || 'Node Socket'
+const SERVER_PORT = process.env.SERVER_PORT || 3000
+
 import { Server } from 'socket.io'
 import { createClient } from 'redis'
 import { createAdapter } from '@socket.io/redis-adapter'
+
 /**
- * Configure redis
+ * Create redis
  */
-const pubClient = createClient({
+const pubClient =  createClient({
     url: `redis://${REDIS_SOCKET_HOST}:${REDIS_SOCKET_PORT}`})
-const subClient = pubClient.duplicate()
+const subClient =  pubClient.duplicate()
 
 pubClient.on('connect', () => {
-    console.debug('pubs connected')
+    console.debug(`${SERVER_NAME}: Pub connection to Redis server ok`)
 })
 subClient.on('connect', () => {
-    console.debug('subs connected')
+    console.debug(`${SERVER_NAME}: Sub connection to Redis server ok`)
 })
 
 /**
@@ -31,34 +33,18 @@ subClient.on('connect', () => {
  */
 const io = new Server()
 
-/**
- * Start server
- */
-Promise.all([pubClient.connect(), subClient.connect()])
-    .then(() => {
-        io.adapter(createAdapter(pubClient, subClient))
+Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
 
-        io.on('connection', (socket) => {
-            socket.emit('socket.myNameIs', SERVER_NAME)
-            console.debug('connection: ' + socket.handshake.address)
+    io.adapter(createAdapter(pubClient, subClient));
 
-            socket.on('disconnect', data => {
-                console.debug('disconnect: ' + socket.handshake.address)
-            })
+    io.on('connection', (socket) => {
+        socket.emit('socket.myNameIs', SERVER_NAME)
+        console.debug('connection: ' + socket.handshake.address)
+
+        socket.on('disconnect', data => {
+            console.debug('disconnect: ' + socket.handshake.address)
         })
+    })
 
-        /**
-         * Start socket server
-         */
-        io.listen(PORT, (err) => {
-            if (err) {
-                console.error(err)
-                process.exit(-1)
-            } else {
-                console.debug(`Start Socket Server ${SERVER_NAME}:${PORT}`)
-            }
-        });
-    })
-    .catch(err => {
-        console.error(err)
-    })
+    io.listen(SERVER_PORT)
+})

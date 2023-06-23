@@ -95,8 +95,10 @@ services:
       - 'host.docker.internal:host-gateway'
     networks:
       - lab325_examples_network
+    depends_on:
+      - rabbit.mq
     environment:
-      - NAME=api.SendMail
+      - SERVER_NAME=api.send.name
     env_file:
       - .env
 
@@ -127,6 +129,8 @@ services:
     depends_on:
       - front.vue
       - api.send.email
+      - socket.sunny
+      - socket.jonny
 
 networks:
   lab325_examples_network:
