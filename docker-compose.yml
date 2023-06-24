@@ -2,9 +2,9 @@ version: '3'
 services:
 
   consumer.send.email:
-    build: ./consumers/send_email
+    build: consumers/consumer_send_email
     volumes:
-      - ./consumers/send_email:/usr/src/app
+      - ./consumers/consumer_send_email:/usr/src/app
     command: sh -c " npm install && npm start "
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -13,14 +13,14 @@ services:
     depends_on:
       - rabbit.mq
     environment:
-      - NAME=consumer.SendEmail
+      - NAME=consumer.send.email
     env_file:
       - .env
 
   consumer.send.front:
-    build: ./consumers/send_front
+    build: consumers/consumer_send_front
     volumes:
-      - ./consumers/send_front:/usr/src/app
+      - ./consumers/consumer_send_front:/usr/src/app
     command: sh -c " npm install && npm start "
     extra_hosts:
       - 'host.docker.internal:host-gateway'
