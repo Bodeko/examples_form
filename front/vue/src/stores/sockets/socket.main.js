@@ -22,6 +22,11 @@ export const useSocketMainStore = defineStore('socket.main', {
             })
             this.isConnect = true
 
+            //Реакция на любое сообщение
+            this.socket.on('message', (data) => {
+                // Обрабатывайте полученные данные здесь
+                console.log('Catch message from server:', data);
+            });
             // Реакция на отключение связи
             this.socket.on('disconnect', (data) => {
                 toast.error(data)

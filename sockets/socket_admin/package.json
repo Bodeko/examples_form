@@ -1,0 +1,17 @@
+{
+  "name": "sockets",
+  "version": "0.1.0",
+  "private": true,
+  "author": {
+    "name": "Oleksandr Nykytin",
+    "email": "keeper@ninydev.com"
+  },
+  "type": "module",
+  "dependencies": {
+    "socket.io": "^4.6.1",
+    "@socket.io/admin-ui": "^0.5.1"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

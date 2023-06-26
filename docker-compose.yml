@@ -46,9 +46,9 @@ services:
       - "15672:15672"
 
   socket.sunny:
-    build: ./sockets
+    build: ./sockets/socket_instance
     volumes:
-      - ./sockets:/usr/src/app
+      - ./sockets/socket_instance:/usr/src/app
     command: sh -c " npm install && npm start "
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -57,14 +57,14 @@ services:
     depends_on:
       - redis.socket
     environment:
-      - SERVER_NAME=socket.Sunny
+      - SERVER_NAME=socket.sunny
     env_file:
       - .env
 
   socket.jonny:
-    build: ./sockets
+    build: ./sockets/socket_instance
     volumes:
-      - ./sockets:/usr/src/app
+      - ./sockets/socket_instance:/usr/src/app
     command: sh -c " npm install && npm start "
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -73,7 +73,26 @@ services:
     depends_on:
       - redis.socket
     environment:
-      - SERVER_NAME=socket.Jonny
+      - SERVER_NAME=socket.jonny
+    env_file:
+      - .env
+
+  socket.admin:
+    build: ./sockets/socket_admin
+    volumes:
+      - ./sockets/socket_admin:/usr/src/app
+    command: sh -c " npm install && npm start "
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - lab325_examples_network
+    depends_on:
+      - redis.socket
+    ports:
+      - "3030:3030"
+    environment:
+      - SERVER_NAME=socket.admin
+      - SERVER_PORT=3030
     env_file:
       - .env
 

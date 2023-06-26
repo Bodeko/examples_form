@@ -69,15 +69,24 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
              * When front sends data, create msg with UUID v4
              */
             let msg = {
-                'id': v4(),
-                'email': 'keeper@ninydev.com', //request.body.email,
-                'name': 'Oleksandr Nykytin' //request.body.name
+                'eventId': v4(),
+                'server': SERVER_NAME,
+                'eventType': 'send.mail',
+                'status': 'success',
+                'errors': null,
+                'body': {
+                    'email': 'keeper@ninydev.com', //request.body.email,
+                    'name': 'Oleksandr Nykytin', //request.body.name
+                    'message': 'hello email'
+                }
             };
-            console.log(msg);
+            console.debug('Send message:');
+            console.debug(msg);
 
             /**
              * Step 6
              * Send message to RabbitMQ queue
+             * --> consumer.send.email
              */
             channel.sendToQueue(RABBITMQ_QUEUE_SEND_EMAIL, Buffer.from(JSON.stringify(msg)));
 
@@ -85,7 +94,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
              * Step 7
              * Send msg.id to front
              */
-            response.end(msg.id);
+            response.end(msg.eventId);
         }).listen(3000);
     });
 });

@@ -13,6 +13,17 @@ const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'send
 const RABBITMQ_QUEUE_SEND_FRONT = process.env.RABBITMQ_QUEUE_SEND_FRONT || 'send.front';
 
 /**
+ * Configure smtp
+ */
+const MAIL_HOST = process.env.MAIL_HOST || 'smtp'
+const MAIL_PORT = process.env.MAIL_PORT || 25
+const MAIL_USERNAME = process.env.MAIL_USERNAME || 'noreply'
+const MAIL_PASSWORD = process.env.MAIL_PASSWORD || 'password'
+const MAIL_ENCRYPTION = process.env.MAIL_ENCRYPTION || null
+const MAIL_FROM_ADDRESS = process.env.MAIL_FROM_ADDRESS || 'noreply'
+const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || 'TestMail'
+
+/**
  * Configure microservice
  */
 const SERVER_NAME = process.env.SERVER_NAME || 'consumer.send.email';
@@ -24,7 +35,7 @@ import amqp from 'amqplib/callback_api.js';
 
 // Pause
 const date = Date.now();
-while (Date.now() - date < 5000) {}
+while (Date.now() - date < 10000) {}
 
 /**
  * Step 1
@@ -73,44 +84,69 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
         channel.consume(RABBITMQ_QUEUE_SEND_EMAIL, async (data) => {
             /**
              * Restore message from producer
+             * api.send.email -->
              */
             const msgIn = JSON.parse(data.content.toString());
-            console.log(msgIn);
+            console.debug('Catch message:')
+            console.debug(msgIn);
+
+            /**
+             * Output message
+             */
+            const msgOut = {
+                'eventId' : msgIn.eventId,
+                'server': SERVER_NAME,
+                'eventType': 'send.mail',
+                'errors': null,
+                'body': {}
+            };
 
             /**
              * Try send email
              */
             try {
-                // Создание транспорта для SMTP
+                /**
+                 * Configure SMTP server
+                 */
                 const transporter = nodemailer.createTransport({
-                    host: 'smtp.example.com', // Укажите хост SMTP-сервера
-                    port: 587, // Укажите порт SMTP-сервера
-                    secure: false, // Установите true, если требуется SSL-соединение
+                    host: MAIL_HOST,
+                    port: MAIL_PORT,
+                    secure: true,
                     auth: {
-                        user: 'your_username', // Укажите имя пользователя для аутентификации на SMTP-сервере
-                        pass: 'your_password', // Укажите пароль для аутентификации на SMTP-сервере
+                        user: MAIL_USERNAME,
+                        pass: MAIL_PASSWORD,
                     },
                 });
 
-                // Определение содержимого письма
+                /**
+                 * Configure email
+                 */
                 const mailOptions = {
-                    from: 'your_email@example.com', // Укажите адрес электронной почты отправителя
-                    to: userEmail, // Укажите адрес электронной почты получателя
-                    subject: 'Привет, ' + userName, // Укажите тему письма
-                    text: 'Пример текста письма', // Укажите текст письма
+                    from: MAIL_FROM_ADDRESS,
+                    to: msgIn.body.email,
+                    subject: 'Hello, ' + msgIn.body.name,
+                    text: 'U message:\n' + msgIn.body.message + '\n\n Event Id: ' + msgIn.eventId,
                 };
 
-                // Отправка письма
                 const info = await transporter.sendMail(mailOptions);
-                console.log('Письмо успешно отправлено:', info.messageId);
+                msgOut.status = 'success';
+                msgOut.body.messageId = info.messageId;
             } catch (error) {
-                console.error('Ошибка при отправке письма:', error);
+                msgOut.status = 'failed';
+                msgOut.errors = [error];
             }
 
             /**
-             * Remove message from queue
+             * Remove message from email queue
              */
             channel.ack(data);
+            /**
+             * Send message to front consumer
+             * --> consumer.send.front
+             */
+            console.debug('Send message:');
+            console.debug(msgOut);
+            channel.sendToQueue(RABBITMQ_QUEUE_SEND_FRONT, Buffer.from(JSON.stringify(msgOut)));
         });
     });
 });

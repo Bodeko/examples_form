@@ -1,74 +1,102 @@
-// настройки соединения с шиной данных
+/**
+ * Configure RabbitMQ server
+ */
 const RABBITMQ_DEFAULT_USER = process.env.RABBITMQ_DEFAULT_USER || 'user';
 const RABBITMQ_DEFAULT_PASS = process.env.RABBITMQ_DEFAULT_PASS || 'password';
 const RABBITMQ_SERVER = process.env.RABBITMQ_SERVER || 'rabbit.mq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || 5672;
+const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`;
 
-const amqp = require("amqplib/callback_api");
+const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'send.email';
+const RABBITMQ_QUEUE_SEND_FRONT = process.env.RABBITMQ_QUEUE_SEND_FRONT || 'send.front';
 
-// Настройки соединения с сокетами
-const REDIS_SOCKET_HOST = process.env.REDIS_SOCKET_HOST || 'redis.socket';
+/**
+ * Configure Redis server
+ */
+const REDIS_SOCKET_HOST = process.env.REDIS_SOCKET_HOST || 'redis.sockets';
 const REDIS_SOCKET_PORT = process.env.REDIS_SOCKET_PORT || 6379;
+const REDIS_SOCKET_CONNECTION_STRING = `redis://${REDIS_SOCKET_HOST}:${REDIS_SOCKET_PORT}`;
 
-const {Emitter} = require("@socket.io/redis-emitter");
-const {createClient} = require("redis");
+/**
+ * Configure microservice
+ */
+const SERVER_NAME = process.env.SERVER_NAME || 'consumer.send.front';
 
-const connect = async () => {
-    const redisClient = createClient({url: `redis://${REDIS_SOCKET_HOST}:${REDIS_SOCKET_PORT}`});
-    redisClient.on("connect", () => {
-        console.debug("connected to redis server");
-    });
+/**
+ * Modules
+ */
+import amqp from 'amqplib/callback_api.js';
+import { Emitter } from "@socket.io/redis-emitter";
+import { createClient } from "redis";
 
-    // Ожидание соединения
-    await redisClient.connect();
-    const io = new Emitter(redisClient);
+// Pause
+const date = Date.now();
+while (Date.now() - date < 10000) {}
 
-    amqp.connect(`amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`, function (errorConnect, connection) {
-        if (errorConnect) {
-            console.error(errorConnect)
+/**
+ * Step 1
+ * Connect to RabbitMQ server
+ */
+amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
+    if (errorConnect) {
+        console.error(errorConnect);
+        process.exit(-1);
+    }
+    console.debug("connect RabbitMQ ok");
+
+    /**
+     * Step 2
+     * Create RabbitMQ channel
+     */
+    await connection.createChannel(async (errorChannel, channel) => {
+        if (errorChannel) {
+            console.error(errorChannel);
             process.exit(-1);
         }
-        console.debug("connect sendToFront rabbit ok")
-        amqpConnection = connection
-        connection.createChannel(function (errorChannel, channel) {
-            if (errorChannel) {
-                console.error(errorChannel)
+
+        /**
+         * Step 3
+         * Assert channel to queue
+         */
+        await channel.assertQueue(RABBITMQ_QUEUE_SEND_FRONT, {}, (errorFrontQueue) => {
+            if (errorFrontQueue) {
+                console.error(errorFrontQueue);
                 process.exit(-1);
             }
-            console.debug("create sendToFront rabbit channel ok")
-
-            let amqpChannelFront = channel
-
-            amqpChannelFront.assertQueue(rabbitQueueSendToFront, {
-                // durable: false
-            });
-
-            // А тут мы слушаем что нужно сделать
-            amqpChannelFront.consume(rabbitQueueSendToFront, function (msg) {
-                // let seconds = 20
-                // let waitTill = new Date(new Date().getTime() + seconds * 1000);
-                // while(waitTill > new Date()){}
-
-                data = msg.content.toString()
-                let d = new Date().toLocaleString()
-                console.log("[x] " + d + "  ToFront %s ", data)
-
-                let entData = JSON.parse(data)
-
-                if (typeof (entData.body) !== 'string') {
-                    entData.body = JSON.stringify(entData)
-                }
-                // Отправить на сокеты
-                io.emit(entData.event, entData.body)
-            }, {
-                noAck: true
-            });
-
-
+            console.debug("Front queue asserted");
         });
+
+        /**
+         * Step 4
+         * Create redis emitter
+         */
+        const redisClient = createClient({ url: REDIS_SOCKET_CONNECTION_STRING });
+
+        redisClient.connect().then(() => {
+            console.debug('Connect redis ok');
+            const emitter = new Emitter(redisClient);
+            /**
+             * Step 5
+             * Consumer
+             */
+            channel.consume(RABBITMQ_QUEUE_SEND_FRONT, async (data) => {
+                /**
+                 * Restore message from producer
+                 */
+                const msgIn = JSON.parse(data.content.toString());
+                console.debug('Catch message:');
+                console.debug(msgIn);
+
+                const eventName = msgIn.eventType + '.' + msgIn.eventId
+
+                emitter.emit(eventName, msgIn)
+
+                /**
+                 * Remove message from queue
+                 */
+                channel.ack(data);
+            });
+        });
+
     });
-
-
-}
-
-connect().catch(console.error);
+});
