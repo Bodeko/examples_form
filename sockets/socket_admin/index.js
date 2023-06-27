@@ -1,5 +1,3 @@
-import {instrument} from "@socket.io/admin-ui";
-
 /**
  * Configure Redis server
  */
@@ -19,7 +17,8 @@ const SERVER_PORT = parseInt(process.env.SERVER_PORT || 3000);
 import { Server } from 'socket.io';
 import { createClient } from 'redis';
 import { createAdapter } from '@socket.io/redis-adapter';
-
+import {instrument} from "@socket.io/admin-ui";
+import cluster from "cluster";
 /**
  * Create redis
  */
