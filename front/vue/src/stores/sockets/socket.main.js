@@ -27,6 +27,12 @@ export const useSocketMainStore = defineStore('socket.main', {
                 // Обрабатывайте полученные данные здесь
                 console.log('Catch message from server:', data);
             });
+
+            this.socket.on('ping', (data) => {
+                // Обрабатывайте полученные данные здесь
+                console.log('ping from server:', data);
+            });
+
             // Реакция на отключение связи
             this.socket.on('disconnect', (data) => {
                 toast.error(data)

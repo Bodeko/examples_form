@@ -9,7 +9,9 @@
   "type": "module",
   "dependencies": {
     "socket.io": "^4.6.1",
-    "@socket.io/admin-ui": "^0.5.1"
+    "@socket.io/admin-ui": "^0.5.1",
+    "@socket.io/redis-adapter": "^8.2.1",
+    "redis": "^4.6.7"
   },
   "scripts": {
     "start": "node index.js"
