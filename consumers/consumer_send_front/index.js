@@ -95,7 +95,8 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                 console.debug('Catch message:');
                 console.debug(msgIn);
 
-                const eventName = msgIn.eventType + '.' + msgIn.eventId
+                const eventName = msgIn.eventType + '.' + msgIn.eventId;
+                console.debug(eventName);
 
                 emitter.emit(eventName, msgIn)
 

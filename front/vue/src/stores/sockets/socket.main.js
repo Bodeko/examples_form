@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {toast} from "vue3-toastify";
 import {io} from "socket.io-client";
-import MyLog from "@/services/myLog";
+import MyLog from "@/helpers/myLog";
 
 
 export const useSocketMainStore = defineStore('socket.main', {
@@ -16,21 +16,21 @@ export const useSocketMainStore = defineStore('socket.main', {
         connect() {
             if (this.isConnect) return
             this.socket = io('/')
+            this.isConnect = true
+
             // Реакция на сообщение с сервера
             this.socket.on('socket.myNameIs', (data) => {
                 toast.success('Connect to: ' + data)
             })
-            this.isConnect = true
 
             //Реакция на любое сообщение
             this.socket.on('message', (data) => {
-                // Обрабатывайте полученные данные здесь
-                console.log('Catch message from server:', data);
+                MyLog('Catch message from server:', data);
             });
 
+            // Пинг с сервера
             this.socket.on('ping', (data) => {
-                // Обрабатывайте полученные данные здесь
-                console.log('ping from server:', data);
+                MyLog('ping from server:', data);
             });
 
             // Реакция на отключение связи
@@ -39,6 +39,13 @@ export const useSocketMainStore = defineStore('socket.main', {
                 this.isConnect = false
             })
 
+        },
+        on(eventName, callBack){
+            this.socket.on(eventName, callBack);
+
+        },
+        off(eventName, callBack){
+            this.socket.off(eventName, callBack)
         }
     }
 })

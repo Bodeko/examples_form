@@ -7,8 +7,9 @@ export default {
      * @param ttl
      */
     setItem(itemName, itemBody, ttl = null) {
-        localStorage.setItem(itemName, JSON.stringify(itemBody))
+        localStorage.setItem(itemName, JSON.stringify(itemBody));
     },
+
 
     /**
      * Получает данные из хранилища
@@ -17,9 +18,9 @@ export default {
      */
     getItem(itemName) {
         try {
-            return JSON.parse(localStorage.getItem(itemName))
+            return JSON.parse(localStorage.getItem(itemName));
         } catch (e) {
-            return null
+            return null;
         }
     }
 }

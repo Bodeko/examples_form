@@ -23,8 +23,8 @@ import http from 'http';
 import { v4 } from 'uuid';
 
 // Pause
-const date = Date.now();
-while (Date.now() - date < 5000) {}
+// const date = Date.now();
+// while (Date.now() - date < 5000) {}
 
 /**
  * Step 1
@@ -68,33 +68,52 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
              * Step 5
              * When front sends data, create msg with UUID v4
              */
-            let msg = {
-                'eventId': v4(),
-                'server': SERVER_NAME,
-                'eventType': 'send.mail',
-                'status': 'success',
-                'errors': null,
-                'body': {
-                    'email': 'keeper@ninydev.com', //request.body.email,
-                    'name': 'Oleksandr Nykytin', //request.body.name
-                    'message': 'hello email'
+
+            let body = '';
+
+            request.on('data', chunk => {
+                body += chunk;
+            });
+
+            request.on('end', () => {
+                const { email, name, message } = JSON.parse(body);
+
+                // Проверка наличия необходимых параметров
+                if (!email || !name || !message) {
+                    response.statusCode = 400;
+                    response.end('Invalid request');
+                    return;
                 }
-            };
-            console.debug('Send message:');
-            console.debug(msg);
 
-            /**
-             * Step 6
-             * Send message to RabbitMQ queue
-             * --> consumer.send.email
-             */
-            channel.sendToQueue(RABBITMQ_QUEUE_SEND_EMAIL, Buffer.from(JSON.stringify(msg)));
+                let msg = {
+                    'eventId': v4(),
+                    'server': SERVER_NAME,
+                    'eventType': 'send.mail',
+                    'status': 'success',
+                    'errors': null,
+                    'body': {
+                        'email': email,
+                        'name': name,
+                        'message': message,
+                    }
+                };
+                console.debug('Send message:');
+                console.debug(msg);
 
-            /**
-             * Step 7
-             * Send msg.id to front
-             */
-            response.end(msg.eventId);
+                /**
+                 * Step 6
+                 * Send message to RabbitMQ queue
+                 * --> consumer.send.email
+                 */
+                channel.sendToQueue(RABBITMQ_QUEUE_SEND_EMAIL, Buffer.from(JSON.stringify(msg)));
+
+                /**
+                 * Step 7
+                 * Send msg.id to front
+                 */
+                response.end(msg.eventId);
+            });
+
         }).listen(3000);
     });
 });

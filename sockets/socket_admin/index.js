@@ -8,7 +8,7 @@ const REDIS_SOCKET_CONNECTION_STRING = `redis://${REDIS_SOCKET_HOST}:${REDIS_SOC
 /**
  * Configure microservice
  */
-const SERVER_NAME = process.env.SERVER_NAME || 'Node Socket';
+const SERVER_NAME = process.env.SERVER_NAME || 'Node Socket Admin';
 const SERVER_PORT = parseInt(process.env.SERVER_PORT || 3000);
 
 /**
