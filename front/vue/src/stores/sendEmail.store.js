@@ -2,6 +2,7 @@ import {defineStore} from "pinia";
 import myFetch from "@/helpers/myFetch";
 import {useSocketMainStore} from "@/stores/sockets/socket.main";
 import myLog from "@/helpers/myLog";
+import {toast} from "vue3-toastify";
 
 
 export const useSendEmailStore = defineStore('sendEmail', {
@@ -28,6 +29,7 @@ export const useSendEmailStore = defineStore('sendEmail', {
                 this.socket.on('send.mail.' + this.eventId, this.waitResponse);
             }).catch(err => {
                 myLog(err)
+                toast.error("Error api")
                 this.isPreload = false
             })
 
@@ -36,6 +38,10 @@ export const useSendEmailStore = defineStore('sendEmail', {
             myLog(data)
             this.isPreload = false
             this.socket.off('send.mail.' + this.eventId, this.waitResponse);
+            if(data.status === 'success')
+                toast.success("Email send")
+            else
+                toast.error('Email error')
 
         }
 

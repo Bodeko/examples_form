@@ -1,7 +1,7 @@
 import {defineStore} from "pinia";
 import {toast} from "vue3-toastify";
 import {io} from "socket.io-client";
-import MyLog from "@/helpers/myLog";
+import myLog from "@/helpers/myLog";
 
 
 export const useSocketMainStore = defineStore('socket.main', {
@@ -25,12 +25,18 @@ export const useSocketMainStore = defineStore('socket.main', {
 
             //Реакция на любое сообщение
             this.socket.on('message', (data) => {
-                MyLog('Catch message from server:', data);
+                myLog('Catch message from server:', data);
             });
 
             // Пинг с сервера
             this.socket.on('ping', (data) => {
-                MyLog('ping from server:', data);
+                toast.info('Ping from server: \n' + new Date(data).toLocaleString(), {
+                    theme: 'colored',
+                    position: toast.POSITION.BOTTOM_RIGHT,
+                    transition: "zoom",
+                    autoClose: 500
+
+                });
             });
 
             // Реакция на отключение связи

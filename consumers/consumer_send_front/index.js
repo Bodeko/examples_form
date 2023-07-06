@@ -76,9 +76,9 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
             console.debug('Connect redis ok');
             const emitter = new Emitter(redisClient);
 
-            // For test
+            // Ping service
             setInterval(() =>{
-                emitter.emit('ping', Date.now().toLocaleString())
+                emitter.emit('ping', Date.now())
             }, 10000)
 
 
