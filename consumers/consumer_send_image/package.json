@@ -1,0 +1,14 @@
+{
+  "name": "Consumer.send.image",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "sharp": "^0.32.1",
+    "minio": "^7.1.1"
+  }
+}

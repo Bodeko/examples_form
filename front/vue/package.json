@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "vee-validate": "^4.10.5",
+    "vue-advanced-cropper": "^2.8.8",
     "yup": "^1.2.0",
     "@tiptap/pm": "^2.0.3",
     "@tiptap/starter-kit": "^2.0.3",

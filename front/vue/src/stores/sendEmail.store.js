@@ -42,7 +42,6 @@ export const useSendEmailStore = defineStore('sendEmail', {
                 toast.success("Email send")
             else
                 toast.error('Email error')
-
         }
 
     }
