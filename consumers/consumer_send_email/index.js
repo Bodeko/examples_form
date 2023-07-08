@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 
 /**
  * Configure RabbitMQ server
@@ -8,14 +9,24 @@ const RABBITMQ_SERVER = process.env.RABBITMQ_SERVER || 'rabbit.mq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || 5672;
 const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`;
 
-const RABBITMQ_QUEUE_SEND_IMAGE = process.env.RABBITMQ_QUEUE_SEND_IMAGE || 'send.image';
+const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'send.email';
 const RABBITMQ_QUEUE_SEND_FRONT = process.env.RABBITMQ_QUEUE_SEND_FRONT || 'send.front';
 
+/**
+ * Configure smtp
+ */
+const MAIL_HOST = process.env.MAIL_HOST || 'smtp'
+const MAIL_PORT = process.env.MAIL_PORT || 25
+const MAIL_USERNAME = process.env.MAIL_USERNAME || 'noreply'
+const MAIL_PASSWORD = process.env.MAIL_PASSWORD || 'password'
+const MAIL_ENCRYPTION = process.env.MAIL_ENCRYPTION || null
+const MAIL_FROM_ADDRESS = process.env.MAIL_FROM_ADDRESS || 'noreply'
+const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || 'TestMail'
 
 /**
  * Configure microservice
  */
-const SERVER_NAME = process.env.SERVER_NAME || 'consumer.send.image';
+const SERVER_NAME = process.env.SERVER_NAME || 'consumer.send.email';
 
 /**
  * Modules
@@ -24,7 +35,7 @@ import amqp from 'amqplib/callback_api.js';
 
 // Pause
 const date = Date.now();
-while (Date.now() - date < 5000) {}
+while (Date.now() - date < 10000) {}
 
 /**
  * Step 1
@@ -51,7 +62,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
          * Step 3
          * Assert channel to queues
          */
-        await channel.assertQueue(RABBITMQ_QUEUE_SEND_IMAGE, {}, (errorEmailQueue) => {
+        await channel.assertQueue(RABBITMQ_QUEUE_SEND_EMAIL, {}, (errorEmailQueue) => {
             if (errorEmailQueue) {
                 console.error(errorEmailQueue);
                 process.exit(-1);
@@ -70,7 +81,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
          * Step 4
          * Consumer
          */
-        channel.consume(RABBITMQ_QUEUE_SEND_IMAGE, async (data) => {
+        channel.consume(RABBITMQ_QUEUE_SEND_EMAIL, async (data) => {
             /**
              * Restore message from producer
              * api.send.email -->
@@ -90,9 +101,43 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                 'body': {}
             };
 
+            /**
+             * Try send email
+             */
+            try {
+                /**
+                 * Configure SMTP server
+                 */
+                const transporter = nodemailer.createTransport({
+                    host: MAIL_HOST,
+                    port: MAIL_PORT,
+                    secure: true,
+                    auth: {
+                        user: MAIL_USERNAME,
+                        pass: MAIL_PASSWORD,
+                    },
+                });
+
+                /**
+                 * Configure email
+                 */
+                const mailOptions = {
+                    from: MAIL_FROM_ADDRESS,
+                    to: msgIn.body.email,
+                    subject: 'Hello, ' + msgIn.body.name,
+                    text: 'U message:\n' + msgIn.body.message + '\n\n Event Id: ' + msgIn.eventId,
+                };
+
+                const info = await transporter.sendMail(mailOptions);
+                msgOut.status = 'success';
+                msgOut.body.messageId = info.messageId;
+            } catch (error) {
+                msgOut.status = 'failed';
+                msgOut.errors = [error];
+            }
 
             /**
-             * Remove message from  queue
+             * Remove message from email queue
              */
             channel.ack(data);
             /**

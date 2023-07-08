@@ -91,6 +91,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                     'eventType': 'send.mail',
                     'status': 'success',
                     'errors': null,
+                    'template': 'email.verify',
                     'body': {
                         'email': email,
                         'name': name,

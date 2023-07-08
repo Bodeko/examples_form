@@ -28,6 +28,16 @@ export const useSocketMainStore = defineStore('socket.main', {
                 myLog('Catch message from server:', data);
             });
 
+            this.socket.on('user.id.10', (data) => {
+                myLog(data)
+                switch (data.type) {
+                    case 'change.Role':
+                        break;
+                    case 'user.block':
+                        break;
+                }
+            })
+
             // Пинг с сервера
             this.socket.on('ping', (data) => {
                 toast.info('Ping from server: \n' + new Date(data).toLocaleString(), {
