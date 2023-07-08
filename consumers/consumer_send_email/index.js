@@ -34,7 +34,7 @@ const SERVER_NAME = process.env.SERVER_NAME || 'consumer.send.email';
 import amqp from 'amqplib/callback_api.js';
 
 // Pause
-const date = Date.now();
+let date = Date.now();
 while (Date.now() - date < 10000) {}
 
 /**
@@ -82,6 +82,10 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
          * Consumer
          */
         channel.consume(RABBITMQ_QUEUE_SEND_EMAIL, async (data) => {
+
+            // let date = Date.now();
+            // while (Date.now() - date < 30000) {}
+
             /**
              * Restore message from producer
              * api.send.email -->

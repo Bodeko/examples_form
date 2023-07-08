@@ -5,5 +5,8 @@ import SendImageForm from "@/components/forms/SendImageForm.vue";
 
 <template>
   <h2> Home page </h2>
+
+  <SendEmailForm></SendEmailForm>
+
   <SendImageForm></SendImageForm>
 </template>

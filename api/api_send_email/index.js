@@ -91,7 +91,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                     'eventType': 'send.mail',
                     'status': 'success',
                     'errors': null,
-                    'template': 'email.verify',
+                    'template': 'email.message',
                     'body': {
                         'email': email,
                         'name': name,
@@ -100,6 +100,10 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                 };
                 console.debug('Send message:');
                 console.debug(msg);
+
+                // Pause
+const date = Date.now();
+while (Date.now() - date < 5000) {}
 
                 /**
                  * Step 6
