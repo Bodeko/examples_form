@@ -27,21 +27,7 @@ import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
 import {fileTypeFromFile} from 'file-type';
-import multer from 'multer';
-
-// Создание экземпляра multer и настройка сохранения файла
-const storage = multer.diskStorage({
-    destination: UPLOAD_DIR,
-    filename: (req, file, cb) => {
-        // Генерация уникального имени файла
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        console.log(uniqueSuffix)
-        const fileExtension = file.originalname.split('.').pop();
-        cb(null, `${uniqueSuffix}.${fileExtension}`);
-    },
-});
-
-const upload = multer({ storage });
+import formidable from 'formidable';
 
 
 // Функция для проверки файла на тип изображения
@@ -97,22 +83,33 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
 
             try {
                 if (request.method === 'POST') {
-                    const fileID = v4(); // Генерируем уникальный идентификатор для имени файла
-                    const fileName = `${fileID}.jpg`; // Имя файла с расширением
 
-                    const fileStream = fs.createWriteStream(UPLOAD_DIR + fileName);
 
-                    request.on('data', (chunk) => {
-                        fileStream.write(chunk); // Записываем данные в поток файла
-                    });
+                    const form = new formidable.IncomingForm();
 
-                    request.on('end', () => {
-                        fileStream.end(); // Завершаем поток файла
+                    await form.parse(request, (err, fields, files) => {
+                        if (err) {
+                            console.error('Произошла ошибка при разборе формы:', err);
+                            response.statusCode = 500;
+                            response.end('Internal server error.');
+                            return;
+                        }
+
+                        // Получаем информацию о загруженном файле
+                        const file = files.file;
+                        const tempPath = file.path;
+                        const fileName = file.name;
+
+                        // Перемещаем файл в желаемую директорию
+                        const destinationPath = `${UPLOAD_DIR}${fileName}`;
+                        fs.renameSync(tempPath, destinationPath);
 
                         console.log(`Файл ${fileName} успешно сохранен.`);
                         response.statusCode = 200;
                         response.end(`Файл ${fileName} успешно загружен на сервер.`);
                     });
+
+
                 } else {
                     response.statusCode = 404;
                     response.end('Not found.');
