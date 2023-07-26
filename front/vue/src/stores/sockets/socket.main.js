@@ -45,7 +45,6 @@ export const useSocketMainStore = defineStore('socket.main', {
                     position: toast.POSITION.BOTTOM_RIGHT,
                     transition: "zoom",
                     autoClose: 500
-
                 });
             });
 

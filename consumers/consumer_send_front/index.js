@@ -98,7 +98,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                 const eventName = msgIn.eventType + '.' + msgIn.eventId;
                 console.debug(eventName);
 
-                emitter.emit(eventName, msgIn)
+                emitter.emit(eventName, msgIn);
 
                 /**
                  * Remove message from queue

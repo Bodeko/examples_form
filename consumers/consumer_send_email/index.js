@@ -130,6 +130,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                     to: msgIn.body.email,
                     subject: 'Hello, ' + msgIn.body.name,
                     text: 'U message:\n' + msgIn.body.message + '\n\n Event Id: ' + msgIn.eventId,
+                    html: 'U message:\n' + msgIn.body.message + '\n\n Event Id: ' + msgIn.eventId,
                 };
 
                 const info = await transporter.sendMail(mailOptions);

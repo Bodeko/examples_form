@@ -26,6 +26,8 @@ export const useSendEmailStore = defineStore('sendEmail', {
                 body: JSON.stringify(data)
             }).then(data => {
                 this.eventId = data;
+                toast.success('EventId: ' + this.eventId)
+                myLog('EventId: ' + this.eventId)
                 this.socket.on('send.mail.' + this.eventId, this.waitResponse);
             }).catch(err => {
                 myLog(err)
