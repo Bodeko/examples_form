@@ -11,6 +11,10 @@ onMounted( () => {
 
 <template>
   <header> Hello User</header>
+  <nav>
+    <RouterLink to="/">Home</RouterLink>
+    <RouterLink to="/about">About</RouterLink>
+  </nav>
   <main id="main">
     <RouterView />
   </main>

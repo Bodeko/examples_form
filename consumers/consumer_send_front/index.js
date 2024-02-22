@@ -7,7 +7,6 @@ const RABBITMQ_SERVER = process.env.RABBITMQ_SERVER || 'rabbit.mq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || 5672;
 const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`;
 
-const RABBITMQ_QUEUE_SEND_EMAIL = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'send.email';
 const RABBITMQ_QUEUE_SEND_FRONT = process.env.RABBITMQ_QUEUE_SEND_FRONT || 'send.front';
 
 /**
@@ -92,6 +91,11 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                  * Restore message from producer
                  */
                 const msgIn = JSON.parse(data.content.toString());
+
+                // Pause
+                let date = Date.now();
+                while (Date.now() - date < 5000) {}
+
                 console.debug('Catch message:');
                 console.debug(msgIn);
 

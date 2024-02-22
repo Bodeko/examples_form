@@ -115,7 +115,7 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
                 const transporter = nodemailer.createTransport({
                     host: MAIL_HOST,
                     port: MAIL_PORT,
-                    secure: true,
+                    // secure: true,
                     auth: {
                         user: MAIL_USERNAME,
                         pass: MAIL_PASSWORD,
@@ -149,6 +149,9 @@ amqp.connect(RABBITMQ_CONNECTION_URI, {}, async (errorConnect, connection) => {
              * Send message to front consumer
              * --> consumer.send.front
              */
+                // Pause
+            let date = Date.now();
+            while (Date.now() - date < 5000) {}
             console.debug('Send message:');
             console.debug(msgOut);
             channel.sendToQueue(RABBITMQ_QUEUE_SEND_FRONT, Buffer.from(JSON.stringify(msgOut)));
